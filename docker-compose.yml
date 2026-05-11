@@ -1,0 +1,50 @@
+services:
+  postgres-db:
+    image: postgres:15
+    container_name: postgres-db
+    environment:
+      POSTGRES_USER: myuser
+      POSTGRES_PASSWORD: mypassword
+      POSTGRES_DB: microdb
+    ports:
+      - "5432:5432"
+
+  profile-service:
+    build: ./profile-service
+    container_name: profile-service
+    ports:
+      - "8081:8081"
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres-db:5432/microdb
+      - SPRING_DATASOURCE_USERNAME=myuser
+      - SPRING_DATASOURCE_PASSWORD=mypassword
+    depends_on:
+      - postgres-db
+
+  feedback-service:
+    build: ./feedback-service
+    container_name: feedback-service
+    ports:
+      - "8082:8082"
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres-db:5432/microdb
+      - SPRING_DATASOURCE_USERNAME=myuser
+      - SPRING_DATASOURCE_PASSWORD=mypassword
+    depends_on:
+      - postgres-db
+
+  gateway-service:
+    build: ./abi-gateway
+    container_name: gateway-service
+    ports:
+      - "8080:8080"
+    environment:
+      - SPRING_CLOUD_GATEWAY_ROUTES_0_ID=profile-service
+      - SPRING_CLOUD_GATEWAY_ROUTES_0_URI=http://profile-service:8081
+      - SPRING_CLOUD_GATEWAY_ROUTES_0_PREDICATES_0=Path=/profiles/**
+      - SPRING_CLOUD_GATEWAY_ROUTES_1_ID=feedback-service
+      - SPRING_CLOUD_GATEWAY_ROUTES_1_URI=http://feedback-service:8082
+      - SPRING_CLOUD_GATEWAY_ROUTES_1_PREDICATES_0=Path=/feedback/**
+    depends_on:
+      - profile-service
+      - feedback-service

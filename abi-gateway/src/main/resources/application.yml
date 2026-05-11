@@ -1,0 +1,12 @@
+spring:
+  cloud:
+    gateway:
+      routes:
+        - id: profile_route
+          uri: ${PROFILE_SERVICE_URL:http://localhost:8081}
+          predicates:
+            - Path=/profiles/**
+        - id: feedback_route
+          uri: ${FEEDBACK_SERVICE_URL:http://localhost:8082}
+          predicates:
+            - Path=/feedback/**
